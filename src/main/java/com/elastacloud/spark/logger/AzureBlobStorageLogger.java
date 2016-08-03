@@ -3,8 +3,10 @@ package com.elastacloud.spark.logger;
 
 import com.elastacloud.azure.blob.storage.PageBlobAppender;
 import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
 
+import java.io.StringWriter;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -115,6 +117,23 @@ public class AzureBlobStorageLogger extends AppenderSkeleton {
     }
     @Override
     protected void append(LoggingEvent loggingEvent) {
+
+        final StringBuilder sb = new StringBuilder(this.layout.format(loggingEvent));
+
+        if (layout.ignoresThrowable())
+        {
+            String[] s = loggingEvent.getThrowableStrRep();
+            if (s != null)
+            {
+                int len = s.length;
+                for (int i = 0; i < len; i++)
+                {
+                    sb.append(s[i]);
+                    sb.append(Layout.LINE_SEP);
+                }
+            }
+        }
+
         loggingEvent.getMessage();
 
         try {
@@ -129,7 +148,7 @@ public class AzureBlobStorageLogger extends AppenderSkeleton {
             if((currentDate != null && hasDateChanged()) || currentDate == null)
                 init();
 
-            appender.log(this.layout.format(loggingEvent));
+            appender.log(sb.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
