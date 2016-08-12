@@ -15,152 +15,190 @@ import java.util.Map;
 /**
  * Created by david on 10/04/14.
  */
-public class AzureBlobStorageLogger extends AppenderSkeleton {
+public class AzureBlobStorageLogger extends AppenderSkeleton
+{
 
-    private String connection;
-    private String container;
-    private String fileSize;
-    private String logFileName;
-    private String logFileDatePattern;
+	private String connection;
+	private String container;
+	private String fileSize;
+	private String logFileName;
+	private String logFileDatePattern;
 
-    private PageBlobAppender appender;
-    private Boolean connected = false;
-    private Date currentDate = null;
+	private PageBlobAppender appender;
+	private Boolean connected = false;
+	private Date currentDate = null;
 
-    public String getLogFileName() {
-        return logFileName;
-    }
 
-    public void setLogFileName(String logFileName) {
-        this.logFileName = logFileName;
-    }
+	public String getLogFileName()
+	{
+		return logFileName;
+	}
 
-    public String getLogFileDatePattern() {
-        return logFileDatePattern;
-    }
 
-    public void setLogFileDatePattern(String logFileDatePattern) {
-        this.logFileDatePattern = logFileDatePattern;
-    }
+	public void setLogFileName(String logFileName)
+	{
+		this.logFileName = logFileName;
+	}
 
-    public String getFileSize() {
-        return fileSize;
-    }
 
-    public void setFileSize(String fileSize) {
-        this.fileSize = fileSize;
-    }
+	public String getLogFileDatePattern()
+	{
+		return logFileDatePattern;
+	}
 
-    public String getContainer() {
-        return container;
-    }
 
-    public void setContainer(String container) {
-        this.container = container;
-    }
+	public void setLogFileDatePattern(String logFileDatePattern)
+	{
+		this.logFileDatePattern = logFileDatePattern;
+	}
 
-    public String getConnection() {
-        return connection;
-    }
 
-    public void setConnection(String connection) {
-        this.connection = connection;
-    }
+	public String getFileSize()
+	{
+		return fileSize;
+	}
 
-    private String getFilename(String pattern) throws UnknownHostException {
 
-        String result = pattern;
-        SimpleDateFormat sdf = new SimpleDateFormat(this.getLogFileDatePattern());
-        result = result.replace("%d", sdf.format(currentDate));
-        result = result.replace("%h", java.net.InetAddress.getLocalHost().getHostName());
+	public void setFileSize(String fileSize)
+	{
+		this.fileSize = fileSize;
+	}
 
-        return result;
-    }
 
-    public AzureBlobStorageLogger()
-    {
+	public String getContainer()
+	{
+		return container;
+	}
 
-    }
 
-    private void connect()
-    {
-        try {
-            this.appender = new PageBlobAppender();
-            this.appender.getBlobReference(this.getConnection(), this.getContainer());
+	public void setContainer(String container)
+	{
+		this.container = container;
+	}
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-        connected = true;
-    }
+	public String getConnection()
+	{
+		return connection;
+	}
 
-    private void init() throws Exception {
 
-        currentDate = new Date();
-        appender.setMaxSize(Integer.parseInt(this.getFileSize()));
-        appender.setLogFileName(this.getFilename(this.getLogFileName()));
-        appender.setFileSuffix(0);
-    }
+	public void setConnection(String connection)
+	{
+		this.connection = connection;
+	}
 
-    private Boolean hasDateChanged()
-    {
-       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-       String d1 = sdf.format(currentDate);
-       String d2 = sdf.format(new Date());
+	private String getFilename(String pattern) throws UnknownHostException
+	{
 
-       if(d1.compareTo(d2) != 0)
-           return true;
+		String result = pattern;
+		SimpleDateFormat sdf = new SimpleDateFormat(this.getLogFileDatePattern());
+		result = result.replace("%d", sdf.format(currentDate));
+		result = result.replace("%h", java.net.InetAddress.getLocalHost().getHostName());
 
-       return false;
-    }
-    @Override
-    protected void append(LoggingEvent loggingEvent) {
+		return result;
+	}
 
-        final StringBuilder sb = new StringBuilder(this.layout.format(loggingEvent));
 
-        if (layout.ignoresThrowable())
-        {
-            String[] s = loggingEvent.getThrowableStrRep();
-            if (s != null)
-            {
-                int len = s.length;
-                for (int i = 0; i < len; i++)
-                {
-                    sb.append(s[i]);
-                    sb.append(Layout.LINE_SEP);
-                }
-            }
-        }
+	public AzureBlobStorageLogger()
+	{
 
-        loggingEvent.getMessage();
+	}
 
-        try {
-            Map map = loggingEvent.getProperties();
 
-            if(this.connected == false)
-                this.connect();
+	private void connect()
+	{
+		try
+		{
+			this.appender = new PageBlobAppender();
+			this.appender.getBlobReference(this.getConnection(), this.getContainer());
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 
-           if(appender == null)
-                throw new Exception("Cannot append to blob storage");
+		connected = true;
+	}
 
-            if((currentDate != null && hasDateChanged()) || currentDate == null)
-                init();
 
-            appender.log(sb.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+	private void init() throws Exception
+	{
 
-    @Override
-    public boolean requiresLayout() {
-        return true;
-    }
+		currentDate = new Date();
+		appender.setMaxSize(Integer.parseInt(this.getFileSize()));
+		appender.setLogFileName(this.getFilename(this.getLogFileName()));
+		appender.setFileSuffix(0);
+	}
 
-    @Override
-    public void close() {
 
-    }
+	private Boolean hasDateChanged()
+	{
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+		String d1 = sdf.format(currentDate);
+		String d2 = sdf.format(new Date());
+
+		if (d1.compareTo(d2) != 0)
+			return true;
+
+		return false;
+	}
+
+
+	@Override
+	protected void append(LoggingEvent loggingEvent)
+	{
+
+		final StringBuilder sb = new StringBuilder(this.layout.format(loggingEvent));
+
+		if (layout.ignoresThrowable())
+		{
+			String[] s = loggingEvent.getThrowableStrRep();
+			if (s != null)
+			{
+				int len = s.length;
+				for (int i = 0; i < len; i++)
+				{
+					sb.append(s[i]);
+					sb.append(Layout.LINE_SEP);
+				}
+			}
+		}
+
+		loggingEvent.getMessage();
+
+		try
+		{
+			Map map = loggingEvent.getProperties();
+
+			if (this.connected == false)
+				this.connect();
+
+			if (appender == null)
+				throw new Exception("Cannot append to blob storage");
+
+			if ((currentDate != null && hasDateChanged()) || currentDate == null)
+				init();
+
+			appender.log(sb.toString());
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+
+	public boolean requiresLayout()
+	{
+		return true;
+	}
+
+
+	public void close()
+	{
+
+	}
 }
